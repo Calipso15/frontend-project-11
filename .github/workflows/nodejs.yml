@@ -44,4 +44,4 @@ jobs:
       - name: Test & publish code coverage  
         run: make test
         env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
