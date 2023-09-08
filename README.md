@@ -15,7 +15,6 @@
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/d3fc558cec65941fccf0/maintainability)](https://codeclimate.com/github/Calipso15/frontend-project-11/maintainability)
 
-[![Test Coverage](https://api.codeclimate.com/v1/badges/d3fc558cec65941fccf0/test_coverage)](https://codeclimate.com/github/Calipso15/frontend-project-11/test_coverage)
 
 Deploy: 
 https://frontend-project-111-gamma.vercel.app/
