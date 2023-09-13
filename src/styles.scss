@@ -1,1 +1,11 @@
 @import "~bootstrap/scss/bootstrap";
+  .error {
+    border: 2px solid red;
+  }
+  .error-message {
+    color: red;
+  }
+  .text-muted {
+    --bs-text-opacity: 1;
+    color: #6c757d !important;
+  }
