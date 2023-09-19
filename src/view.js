@@ -1,7 +1,7 @@
 import onChange from 'on-change';
 import * as yup from 'yup';
 import i18n from 'i18next';
-import createPost from './post';
+import loadRSSFeed from './postload';
 import yupMessages from './message';
 
 const validationSchema = yup.object().shape({
@@ -50,7 +50,7 @@ const initializeView = (initialState) => {
 
           if (state.isValid) {
             feedback.textContent = i18n.t(yupMessages.string.rssLoaded);
-            createPost();
+            loadRSSFeed(inputValue);
             feedback.classList.remove('text-danger');
             feedback.classList.add('text-success');
             input.focus();
