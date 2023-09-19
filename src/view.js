@@ -1,18 +1,23 @@
 import onChange from 'on-change';
 import * as yup from 'yup';
+import i18n from 'i18next';
+import createPost from './post';
+import yupMessages from './message';
 
 const validationSchema = yup.object().shape({
   rssFeedUrl: yup
     .string()
-    .url('Введите корректный URL')
+    .url(yupMessages.string.notCorrectUrl)
     .required('Обязательное поле'),
 });
+i18n.init({ lng: 'ru', debug: true, resources: { yupMessages } });
 
-function initializeView(initialState) {
+const initializeView = (initialState) => {
   const state = { ...initialState };
   function addRssFeed(inputValue, rssFeeds) {
     const input = document.getElementById('url-input');
     const feedback = document.querySelector('.feedback');
+
     state.isValid = true;
     state.errorMessage = '';
 
@@ -20,7 +25,7 @@ function initializeView(initialState) {
       validationSchema.validateSync({ rssFeedUrl: inputValue });
       if (rssFeeds.includes(inputValue)) {
         state.isValid = false;
-        state.errorMessage = 'RSS уже существует';
+        state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
         feedback.textContent = state.errorMessage;
         feedback.classList.remove('text-success');
         feedback.classList.add('text-danger');
@@ -35,7 +40,7 @@ function initializeView(initialState) {
           const htmlCode = data.contents;
           if (!htmlCode.includes('<rss')) {
             state.isValid = false;
-            state.errorMessage = 'Ресурс не содержит валидный RSS';
+            state.errorMessage = i18n.t(yupMessages.string.notValidateUrl);
             input.classList.add('is-invalid');
           } else {
             state.rssFeeds.push(inputValue);
@@ -44,7 +49,8 @@ function initializeView(initialState) {
           input.classList.remove('is-invalid');
 
           if (state.isValid) {
-            feedback.textContent = 'RSS успешно загружен';
+            feedback.textContent = i18n.t(yupMessages.string.rssLoaded);
+            createPost();
             feedback.classList.remove('text-danger');
             feedback.classList.add('text-success');
             input.focus();
@@ -57,13 +63,13 @@ function initializeView(initialState) {
         })
         .catch(() => {
           state.isValid = false;
-          state.errorMessage = 'Что-то пошло не так';
+          state.errorMessage = i18n.t(yupMessages.mixed.default);
           input.classList.add('is-invalid');
           input.focus();
         });
     } catch (error) {
       state.isValid = false;
-      feedback.textContent = 'Введите корректный URL';
+      feedback.textContent = i18n.t(yupMessages.string.notCorrectUrl);
       state.errorMessage = '';
       input.classList.add('is-invalid');
       input.focus();
@@ -76,6 +82,6 @@ function initializeView(initialState) {
     }
   });
   return watchedState;
-}
+};
 
 export default initializeView;
