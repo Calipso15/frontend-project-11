@@ -26,6 +26,7 @@ const initializeView = (initialState) => {
       if (rssFeeds.includes(inputValue)) {
         state.isValid = false;
         state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
+
         feedback.textContent = state.errorMessage;
         feedback.classList.remove('text-success');
         feedback.classList.add('text-danger');
@@ -42,17 +43,18 @@ const initializeView = (initialState) => {
             state.isValid = false;
             state.errorMessage = i18n.t(yupMessages.string.notValidateUrl);
             input.classList.add('is-invalid');
-          } else {
-            state.rssFeeds.push(inputValue);
-            state.rssFeedUrl = '';
           }
           input.classList.remove('is-invalid');
 
           if (state.isValid) {
-            feedback.textContent = i18n.t(yupMessages.string.rssLoaded);
+            state.rssFeeds.push(inputValue);
             loadRSSFeed(inputValue);
+            feedback.textContent = i18n.t(yupMessages.string.rssLoaded);
+            document.querySelector('.posts').innerHTML = '';
+            document.querySelector('.feeds').innerHTML = '';
             feedback.classList.remove('text-danger');
             feedback.classList.add('text-success');
+
             input.focus();
             input.value = '';
           } else {

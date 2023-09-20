@@ -8,7 +8,6 @@ const state = {
   errorMessage: '',
   rssFeeds: [],
 };
-
 initializeView(state);
 const watchedState = initializeView(state);
 document.addEventListener('DOMContentLoaded', () => {
