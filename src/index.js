@@ -1,5 +1,4 @@
 import './styles.scss';
-import 'bootstrap';
 import initializeView from './view';
 
 const state = {

@@ -1,7 +1,30 @@
 import Axios from 'axios';
+import { Modal } from 'bootstrap';
+
+let modal; // Глобальная переменная для хранения экземпляра модального окна
+
+function showModal(postTitle, postContent) {
+  const modalTitle = document.querySelector('.modal-title');
+  const modalBody = document.querySelector('.modal-body');
+
+  modalTitle.textContent = postTitle;
+  modalBody.textContent = postContent;
+
+  modal.show();
+}
+
+// Создаем модальное окно один раз при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+  const modalElement = document.getElementById('modal');
+  modal = new Modal(modalElement);
+});
 
 // Функция для загрузки и отображения RSS-потока
 function loadRSSFeed(url) {
+  if (modal) {
+    modal.hide();
+  }
+  let activeTabs = '';
   // Выполняем HTTP-запрос к RSS-потоку
   return Axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`)
     .then((response) => {
@@ -41,15 +64,48 @@ function loadRSSFeed(url) {
 
         const postItemElement = document.createElement('li');
         postItemElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
-        const postId = `post-${index}`;
-        postItemElement.id = postId;
+        const linkId = `link-${index}`;
         const postLinkElement = document.createElement('a');
+        postLinkElement.id = linkId;
         postLinkElement.classList.add('fw-bold');
         postLinkElement.textContent = postTitle;
         postLinkElement.href = postLink;
         postLinkElement.target = '_blank';
         postItemElement.appendChild(postLinkElement);
         ulPosts.appendChild(postItemElement);
+
+        const createBatton = document.createElement('button');
+        createBatton.id = linkId;
+        createBatton.setAttribute('type', 'button');
+        createBatton.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+        createBatton.setAttribute('data-bs-toggle', 'modal');
+        createBatton.setAttribute('data-bs-target', '#modal');
+        createBatton.textContent = 'Просмотр';
+        postItemElement.append(createBatton);
+
+        createBatton.addEventListener('click', () => {
+          postLinkElement.classList.remove('fw-bold');
+          postLinkElement.classList.add('fw-normal', 'link-secondary');
+          const battonId = createBatton.getAttribute('id');
+          activeTabs = battonId;
+          const postTitle1 = item.querySelector('title').textContent;
+          const postContent = item.querySelector('description').textContent;
+
+          showModal(postTitle1, postContent);
+        });
+
+        const readMoreButton = document.querySelector('.btn-primary');
+        readMoreButton.addEventListener('click', () => {
+          const searchId = document.querySelector(`a#${activeTabs}`);
+          window.open(searchId.href, '_blank'); // Открываем ссылку в новой вкладке
+        });
+
+        postLinkElement.addEventListener('click', () => {
+          postLinkElement.classList.remove('fw-bold');
+          postLinkElement.classList.add('fw-normal', 'link-secondary');
+          const postLink1 = postLinkElement.href; // Получаем ссылку
+          window.open(postLink1, '_blank'); // Открываем ссылку в новой вкладке
+        });
       });
 
       const feedsContainer = document.querySelector('.feeds');
@@ -84,6 +140,7 @@ function loadRSSFeed(url) {
       p.textContent = description;
       liFeeds.appendChild(p);
     })
+
     .catch((error) => {
       console.error('Произошла ошибка при загрузке RSS-потока:', error);
       // Здесь вы можете обработать ошибку и выполнить соответствующие действия

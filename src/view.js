@@ -43,8 +43,12 @@ const initializeView = (initialState) => {
             state.isValid = false;
             state.errorMessage = i18n.t(yupMessages.string.notValidateUrl);
             input.classList.add('is-invalid');
+            feedback.classList.remove('text-success');
+            feedback.classList.add('text-danger');
           }
           input.classList.remove('is-invalid');
+          feedback.classList.add('text-success');
+          feedback.classList.remove('text-danger');
 
           if (state.isValid) {
             state.rssFeeds.push(inputValue);
@@ -52,27 +56,30 @@ const initializeView = (initialState) => {
             feedback.textContent = i18n.t(yupMessages.string.rssLoaded);
             document.querySelector('.posts').innerHTML = '';
             document.querySelector('.feeds').innerHTML = '';
-            feedback.classList.remove('text-danger');
             feedback.classList.add('text-success');
-
+            feedback.classList.remove('text-danger');
             input.focus();
             input.value = '';
           } else {
             feedback.textContent = state.errorMessage;
-            feedback.classList.remove('text-success');
             feedback.classList.add('text-danger');
+            feedback.classList.remove('text-success');
           }
         })
         .catch(() => {
           state.isValid = false;
           state.errorMessage = i18n.t(yupMessages.mixed.default);
           input.classList.add('is-invalid');
+          feedback.classList.add('text-danger');
+          feedback.classList.remove('text-success');
           input.focus();
         });
     } catch (error) {
       state.isValid = false;
       feedback.textContent = i18n.t(yupMessages.string.notCorrectUrl);
       state.errorMessage = '';
+      feedback.classList.add('text-danger');
+      feedback.classList.remove('text-success');
       input.classList.add('is-invalid');
       input.focus();
     }
@@ -83,6 +90,7 @@ const initializeView = (initialState) => {
       addRssFeed(state.rssFeedUrl, state.rssFeeds);
     }
   });
+
   return watchedState;
 };
 
