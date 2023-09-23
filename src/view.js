@@ -23,6 +23,9 @@ const initializeView = (initialState) => {
 
     try {
       validationSchema.validateSync({ rssFeedUrl: inputValue });
+      if (!inputValue) {
+        state.errorMessage = i18n.t(yupMessages.string.notValue);
+      }
       if (rssFeeds.includes(inputValue)) {
         state.isValid = false;
         state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
