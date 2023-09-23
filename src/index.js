@@ -15,12 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-
     const inputValue = input.value.trim();
     if (inputValue) {
       watchedState.rssFeedUrl = inputValue;
     } else {
-      watchedState.isValid = true;
+      watchedState.isValid = false;
       watchedState.errorMessage = '';
     }
   });

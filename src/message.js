@@ -2,7 +2,7 @@ import * as yup from 'yup';
 
 const yupMessages = {
   mixed: {
-    default: 'Ошибка валидации',
+    default: 'Ошибка сети',
   },
   string: {
     notCorrectUrl: 'Введите корректный URL',

@@ -12,9 +12,26 @@ const validationSchema = yup.object().shape({
 });
 i18n.init({ lng: 'ru', debug: true, resources: { yupMessages } });
 
+const showError = (input, feedback, errorMessage) => {
+  const feedbackError = feedback;
+  input.classList.add('is-invalid');
+  feedback.classList.add('text-danger');
+  feedback.classList.remove('text-success');
+  feedbackError.textContent = errorMessage;
+  input.focus();
+};
+
+const showSuccess = (input, feedback, successMessage) => {
+  const feedbackShow = feedback;
+  input.classList.remove('is-invalid');
+  feedback.classList.remove('text-danger');
+  feedback.classList.add('text-success');
+  feedbackShow.textContent = successMessage;
+};
+
 const initializeView = (initialState) => {
   const state = { ...initialState };
-  function addRssFeed(inputValue, rssFeeds) {
+  const addRssFeed = (inputValue, rssFeeds) => {
     const input = document.getElementById('url-input');
     const feedback = document.querySelector('.feedback');
 
@@ -23,18 +40,11 @@ const initializeView = (initialState) => {
 
     try {
       validationSchema.validateSync({ rssFeedUrl: inputValue });
-      if (!inputValue) {
-        state.errorMessage = i18n.t(yupMessages.string.notValue);
-      }
       if (rssFeeds.includes(inputValue)) {
         state.isValid = false;
         state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
 
-        feedback.textContent = state.errorMessage;
-        feedback.classList.remove('text-success');
-        feedback.classList.add('text-danger');
-        input.classList.add('is-invalid');
-        input.focus();
+        showError(input, feedback, state.errorMessage);
         return;
       }
       const corsProxyUrl = `https://allorigins.hexlet.app/get?url=${encodeURIComponent(inputValue)}`;
@@ -45,52 +55,33 @@ const initializeView = (initialState) => {
           if (!htmlCode.includes('<rss')) {
             state.isValid = false;
             state.errorMessage = i18n.t(yupMessages.string.notValidateUrl);
-            input.classList.add('is-invalid');
-            feedback.classList.remove('text-success');
-            feedback.classList.add('text-danger');
+            showError(input, feedback, state.errorMessage);
+          } else {
+            showSuccess(input, feedback, i18n.t(yupMessages.string.rssLoaded));
+            input.focus();
+            input.value = '';
           }
-          input.classList.remove('is-invalid');
-          feedback.classList.add('text-success');
-          feedback.classList.remove('text-danger');
-
           if (state.isValid) {
             state.rssFeeds.push(inputValue);
             loadRSSFeed(inputValue);
-            feedback.textContent = i18n.t(yupMessages.string.rssLoaded);
             document.querySelector('.posts').innerHTML = '';
             document.querySelector('.feeds').innerHTML = '';
-            feedback.classList.add('text-success');
-            feedback.classList.remove('text-danger');
-            input.focus();
-            input.value = '';
-          } else {
-            feedback.textContent = state.errorMessage;
-            feedback.classList.add('text-danger');
-            feedback.classList.remove('text-success');
           }
         })
         .catch(() => {
           state.isValid = false;
           state.errorMessage = i18n.t(yupMessages.mixed.default);
-          input.classList.add('is-invalid');
-          feedback.classList.add('text-danger');
-          feedback.classList.remove('text-success');
-          input.focus();
+          showError(input, feedback, state.errorMessage);
         });
     } catch (error) {
       state.isValid = false;
-      feedback.textContent = i18n.t(yupMessages.string.notCorrectUrl);
-      state.errorMessage = '';
-      feedback.classList.add('text-danger');
-      feedback.classList.remove('text-success');
-      input.classList.add('is-invalid');
-      input.focus();
+      state.errorMessage = i18n.t(yupMessages.string.notCorrectUrl);
+      showError(input, feedback, state.errorMessage);
     }
-  }
-
+  };
   const watchedState = onChange(state, (path) => {
     if (path === 'rssFeedUrl') {
-      addRssFeed(state.rssFeedUrl, state.rssFeeds);
+      addRssFeed(state.rssFeedUrl, state.rssFeeds, state);
     }
   });
 
