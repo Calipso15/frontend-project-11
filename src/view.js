@@ -28,6 +28,12 @@ const showSuccess = (input, feedback, successMessage) => {
   feedback.classList.add('text-success');
   feedbackShow.textContent = successMessage;
 };
+const handleErrors = (state, input, feedback, errorMessage) => {
+  const stateErrors = state;
+  stateErrors.isValid = false;
+  stateErrors.errorMessage = errorMessage;
+  showError(input, feedback, errorMessage);
+};
 
 const initializeView = (initialState) => {
   const state = { ...initialState };
@@ -69,14 +75,10 @@ const initializeView = (initialState) => {
           }
         })
         .catch(() => {
-          state.isValid = false;
-          state.errorMessage = i18n.t(yupMessages.mixed.default);
-          showError(input, feedback, state.errorMessage);
+          handleErrors(state, input, feedback, i18n.t(yupMessages.mixed.default));
         });
     } catch (error) {
-      state.isValid = false;
-      state.errorMessage = i18n.t(yupMessages.string.notCorrectUrl);
-      showError(input, feedback, state.errorMessage);
+      handleErrors(state, input, feedback, i18n.t(yupMessages.string.notCorrectUrl));
     }
   };
   const watchedState = onChange(state, (path) => {
