@@ -1,34 +1,31 @@
 import Axios from 'axios';
 import { Modal } from 'bootstrap';
 
-let modal; // Глобальная переменная для хранения экземпляра модального окна
+let modal;
 
-function showModal(postTitle, postContent) {
+function showModal(postTitle, postContent, postLink) {
   const modalTitle = document.querySelector('.modal-title');
   const modalBody = document.querySelector('.modal-body');
-
+  const readMoreButton = document.querySelector('.btn-primary');
+  readMoreButton.href = postLink;
   modalTitle.textContent = postTitle;
   modalBody.textContent = postContent;
 
   modal.show();
 }
 
-// Создаем модальное окно один раз при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
   const modalElement = document.getElementById('modal');
   modal = new Modal(modalElement);
 });
 
-// Функция для загрузки и отображения RSS-потока
 function loadRSSFeed(url) {
   if (modal) {
     modal.hide();
   }
-  let activeTabs = '';
-  // Выполняем HTTP-запрос к RSS-потоку
+
   return Axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`)
     .then((response) => {
-      // Парсим полученный XML-документ с помощью DOMParser
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data.contents, 'text/xml');
 
@@ -57,7 +54,6 @@ function loadRSSFeed(url) {
 
       const postsListElement = document.createElement('ul');
       postsListElement.classList.add('list-group', 'border-0', 'rounded-0');
-
       items.forEach((item, index) => {
         const postTitle = item.querySelector('title').textContent;
         const postLink = item.querySelector('link').textContent;
@@ -73,7 +69,6 @@ function loadRSSFeed(url) {
         postLinkElement.target = '_blank';
         postItemElement.appendChild(postLinkElement);
         ulPosts.appendChild(postItemElement);
-      
 
         const createBatton = document.createElement('button');
         createBatton.id = linkId;
@@ -87,25 +82,10 @@ function loadRSSFeed(url) {
         createBatton.addEventListener('click', () => {
           postLinkElement.classList.remove('fw-bold');
           postLinkElement.classList.add('fw-normal', 'link-secondary');
-          const battonId = createBatton.getAttribute('id');
-          activeTabs = battonId;
           const postTitle1 = item.querySelector('title').textContent;
           const postContent = item.querySelector('description').textContent;
 
-          showModal(postTitle1, postContent);
-        });
-
-        const readMoreButton = document.querySelector('.btn-primary');
-        readMoreButton.addEventListener('click', () => {
-          const searchId = document.querySelector(`a#${activeTabs}`);
-          window.open(searchId.href, '_blank'); // Открываем ссылку в новой вкладке
-        });
-
-        postLinkElement.addEventListener('click', () => {
-          postLinkElement.classList.remove('fw-bold');
-          postLinkElement.classList.add('fw-normal', 'link-secondary');
-          const postLink1 = postLinkElement.href; // Получаем ссылку
-          window.open(postLink1, '_blank'); // Открываем ссылку в новой вкладке
+          showModal(postTitle1, postContent, postLink);
         });
       });
 
