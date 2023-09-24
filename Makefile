@@ -14,6 +14,3 @@ lint:
 	npx eslint .
 
 .PHONY: test
-
-test play:
-    npx playwright test

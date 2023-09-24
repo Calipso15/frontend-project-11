@@ -1,14 +1,8 @@
 import './styles.scss';
 import initializeView from './view';
 
-const state = {
-  rssFeedUrl: '',
-  isValid: true,
-  errorMessage: '',
-  rssFeeds: [],
-};
-initializeView(state);
-const watchedState = initializeView(state);
+const watchedState = initializeView();
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector('.rss-form');
   const input = document.getElementById('url-input');
