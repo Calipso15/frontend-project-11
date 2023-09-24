@@ -4,6 +4,7 @@ import * as yup from 'yup';
 import i18n from 'i18next';
 import loadRSSFeed from './parser';
 import yupMessages from './message';
+import createState from './state';
 
 const validationSchema = yup.object().shape({
   rssFeedUrl: yup
@@ -14,12 +15,7 @@ const validationSchema = yup.object().shape({
 
 i18n.init({ lng: 'ru', debug: true, resources: { yupMessages } });
 
-const state = {
-  rssFeedUrl: '',
-  isValid: true,
-  errorMessage: '',
-  rssFeeds: [],
-};
+const state = createState();
 
 const showError = (input, feedback, errorMessage) => {
   const feedbackError = feedback;
