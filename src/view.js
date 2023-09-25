@@ -56,34 +56,30 @@ const fetchAndHandleResponse = (inputValue, input, feedback) => {
     });
 };
 
-const initializeView = () => {
-  const input = document.getElementById('url-input');
-  const feedback = document.querySelector('.feedback');
+const input = document.getElementById('url-input');
+const feedback = document.querySelector('.feedback');
 
-  const watchedState = onChange(state, (path) => {
-    if (path === 'rssFeedUrl') {
-      const inputValue = state.rssFeedUrl.trim();
-      state.isValid = true;
-      state.errorMessage = '';
+const watchedState = onChange(state, (path) => {
+  if (path === 'rssFeedUrl') {
+    const inputValue = state.rssFeedUrl.trim();
+    state.isValid = true;
+    state.errorMessage = '';
 
-      try {
-        validationSchema.validateSync({ rssFeedUrl: inputValue });
-        if (state.rssFeeds.includes(inputValue)) {
-          state.isValid = false;
-          state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
+    try {
+      validationSchema.validateSync({ rssFeedUrl: inputValue });
+      if (state.rssFeeds.includes(inputValue)) {
+        state.isValid = false;
+        state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
 
-          showError(input, feedback, state.errorMessage);
-          return;
-        }
-
-        fetchAndHandleResponse(inputValue, input, feedback);
-      } catch (error) {
-        handleErrors(input, feedback, i18n.t(yupMessages.string.notCorrectUrl));
+        showError(input, feedback, state.errorMessage);
+        return;
       }
+
+      fetchAndHandleResponse(inputValue, input, feedback);
+    } catch (error) {
+      handleErrors(input, feedback, i18n.t(yupMessages.string.notCorrectUrl));
     }
-  });
+  }
+});
 
-  return watchedState;
-};
-
-export default initializeView;
+export default watchedState;
