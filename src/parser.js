@@ -1,6 +1,8 @@
 import Axios from 'axios';
 import { Modal } from 'bootstrap';
+import yupMessages from './message';
 import { createFeedContainer, createPostContainer } from './addFeedPost';
+import { errorNetwork } from './feedback';
 
 let modal;
 
@@ -78,10 +80,7 @@ function loadRSSFeed(url) {
       createFeedContainer(title, description);
     })
 
-    .catch((error) => {
-      console.error('Произошла ошибка при загрузке RSS-потока:', error);
-      // Здесь вы можете обработать ошибку и выполнить соответствующие действия
-    });
+    .catch(() => errorNetwork(yupMessages.m.errorNetwork));
 }
 
 export default loadRSSFeed;

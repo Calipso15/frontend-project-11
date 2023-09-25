@@ -3,13 +3,14 @@ import * as yup from 'yup';
 const yupMessages = {
   mixed: {
     default: 'Ошибка сети',
+    errorNetwork: 'Произошла ошибка при загрузке RSS-потока:',
   },
   string: {
     notCorrectUrl: 'Введите корректный URL',
     rssAlreadyExists: 'RSS уже существует',
     notValidateUrl: 'Ресурс не содержит валидный RSS',
     rssLoaded: 'RSS успешно загружен',
-    notValue: 'Не должно быть пустым',
+    notValue: 'Поле не должно быть пустым',
   },
 };
 
