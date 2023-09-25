@@ -56,61 +56,34 @@ const fetchAndHandleResponse = (inputValue, input, feedback) => {
     });
 };
 
-// Функция для периодической проверки RSS-потока
-function checkRSSFeed() {
-  // Проверяем только если rssFeedUrl задан
-  if (state.rssFeedUrl) {
-    loadRSSFeed(state.rssFeedUrl)
-      .then(() => {
-        // При успешной загрузке новых постов обновляем интерфейс
-        // Вы можете добавить код для обновления интерфейса здесь
-        // Например, если у вас есть массив новых постов newPosts:
-        // newPosts.forEach((post) => {
-        //   // Ваш код для обновления интерфейса с новыми постами
-        // });
-      })
-      .catch((error) => {
-        console.error(`Error checking RSS feed: ${error}`);
-        // Отправить уведомление об ошибке, если необходимо
-      })
-      .finally(() => {
-        // Установить следующую проверку через 5 секунд
-        setTimeout(checkRSSFeed, 5000);
-      });
-  } else {
-    // Если rssFeedUrl не задан, просто устанавливаем таймаут для следующей проверки
-    setTimeout(checkRSSFeed, 5000);
-  }
-}
+const initializeView = () => {
+  const input = document.getElementById('url-input');
+  const feedback = document.querySelector('.feedback');
 
-// Инициализация приложения
-const input = document.getElementById('url-input');
-const feedback = document.querySelector('.feedback');
+  const watchedState = onChange(state, (path) => {
+    if (path === 'rssFeedUrl') {
+      const inputValue = state.rssFeedUrl.trim();
+      state.isValid = true;
+      state.errorMessage = '';
 
-const watchedState = onChange(state, (path) => {
-  if (path === 'rssFeedUrl') {
-    const inputValue = state.rssFeedUrl.trim();
-    state.isValid = true;
-    state.errorMessage = '';
+      try {
+        validationSchema.validateSync({ rssFeedUrl: inputValue });
+        if (state.rssFeeds.includes(inputValue)) {
+          state.isValid = false;
+          state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
 
-    try {
-      validationSchema.validateSync({ rssFeedUrl: inputValue });
-      if (state.rssFeeds.includes(inputValue)) {
-        state.isValid = false;
-        state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
+          showError(input, feedback, state.errorMessage);
+          return;
+        }
 
-        showError(input, feedback, state.errorMessage);
-        return;
+        fetchAndHandleResponse(inputValue, input, feedback);
+      } catch (error) {
+        handleErrors(input, feedback, i18n.t(yupMessages.string.notCorrectUrl));
       }
-
-      fetchAndHandleResponse(inputValue, input, feedback);
-    } catch (error) {
-      handleErrors(input, feedback, i18n.t(yupMessages.string.notCorrectUrl));
     }
-  }
-});
+  });
 
-// Начать периодическую проверку RSS-потока
-checkRSSFeed();
+  return watchedState;
+};
 
-export default watchedState;
+export default initializeView;
