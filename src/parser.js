@@ -1,8 +1,9 @@
 import Axios from 'axios';
 import { Modal } from 'bootstrap';
+import _ from 'lodash';
+import i18n from 'i18next';
 import yupMessages from './message';
 import { createFeedContainer, createPostContainer } from './addFeedPost';
-import { errorNetwork } from './feedback';
 
 let modal;
 
@@ -61,6 +62,26 @@ function createListBatton(items) {
     });
   });
 }
+const newPosts = [];
+const addedPosts = [];
+
+function checkForNewPosts(url) {
+  return Axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`)
+    .then((response) => {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(response.data.contents, 'text/xml');
+      const items = Array.from(xmlDoc.querySelectorAll('item'));
+      newPosts.length = 0;
+      const newPostLinks = Array.from(items, (item) => item.querySelector('link').textContent);
+      const uniqueNewPostLinks = _.difference(newPostLinks, addedPosts);
+      const newUniquePosts = items.filter((item) => uniqueNewPostLinks.includes(item.querySelector('link').textContent));
+      newPosts.push(...newUniquePosts);
+      addedPosts.push(...uniqueNewPostLinks);
+
+      createListBatton(newUniquePosts);
+    })
+    .catch(() => i18n.t(yupMessages.mixed.errorNetwork));
+}
 
 function loadRSSFeed(url) {
   if (modal) {
@@ -75,12 +96,22 @@ function loadRSSFeed(url) {
       const description = xmlDoc.querySelector('channel > description').textContent;
       createPostContainer();
       const items = xmlDoc.querySelectorAll('item');
+      items.forEach((item) => {
+        const postLink = item.querySelector('link').textContent;
+        addedPosts.push(postLink);
+      });
+
       createListBatton(items);
 
       createFeedContainer(title, description);
-    })
 
-    .catch(() => errorNetwork(yupMessages.m.errorNetwork));
+      checkForNewPosts(url);
+
+      setInterval(() => {
+        checkForNewPosts(url);
+      }, 5000);
+    })
+    .catch(() => i18n.t(yupMessages.mixed.errorNetwork));
 }
 
 export default loadRSSFeed;
