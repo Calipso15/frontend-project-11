@@ -6,7 +6,7 @@ const yupMessages = {
     errorNetwork: 'Произошла ошибка при загрузке RSS-потока:',
   },
   string: {
-    notCorrectUrl: 'Введите корректный URL',
+    notCorrectUrl: 'Ссылка должна быть валидным URL',
     rssAlreadyExists: 'RSS уже существует',
     notValidateUrl: 'Ресурс не содержит валидный RSS',
     rssLoaded: 'RSS успешно загружен',
