@@ -3,7 +3,6 @@ import * as yup from 'yup';
 const yupMessages = {
   mixed: {
     default: 'Ошибка сети',
-    errorNetwork: 'Произошла ошибка при загрузке RSS-потока:',
   },
   string: {
     notCorrectUrl: 'Ссылка должна быть валидным URL',

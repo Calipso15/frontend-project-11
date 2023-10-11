@@ -80,7 +80,7 @@ function checkForNewPosts(url) {
 
       createListBatton(newUniquePosts);
     })
-    .catch(() => i18n.t(yupMessages.mixed.errorNetwork));
+    .catch(() => i18n.t(yupMessages.mixed.default));
 }
 
 function loadRSSFeed(url) {
@@ -111,7 +111,7 @@ function loadRSSFeed(url) {
         checkForNewPosts(url);
       }, 5000);
     })
-    .catch(() => i18n.t(yupMessages.mixed.errorNetwork));
+    .catch(() => i18n.t(yupMessages.mixed.default));
 }
 
 export default loadRSSFeed;
