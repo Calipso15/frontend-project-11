@@ -2,7 +2,7 @@ import * as yup from 'yup';
 
 const yupMessages = {
   mixed: {
-    default: 'Ошибка сети',
+    default: 'Произошла ошибка при загрузке RSS-потока',
   },
   string: {
     notCorrectUrl: 'Ссылка должна быть валидным URL',
@@ -12,7 +12,6 @@ const yupMessages = {
     notValue: 'Поле не должно быть пустым',
   },
 };
-
 yup.setLocale(yupMessages);
 
 export default yupMessages;

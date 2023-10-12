@@ -12,7 +12,18 @@ const validationSchema = yup.object().shape({
     .required('Обязательное поле'),
 });
 
-i18n.init({ lng: 'ru', debug: true, resources: { yupMessages } });
+i18n.init({
+  lng: 'ru',
+  debug: true,
+  resources: {
+    ru: {
+      translation: {
+        ...yupMessages.mixed,
+        ...yupMessages.string,
+      },
+    },
+  },
+});
 
 const state = {
   rssFeedUrl: '',
@@ -52,7 +63,7 @@ const fetchAndHandleResponse = (inputValue, input, feedback) => {
       }
     })
     .catch(() => {
-      handleErrors(input, feedback, i18n.t(yupMessages.mixed.default));
+      handleErrors(input, feedback, i18n.t(yupMessages.ru.default));
     });
 };
 
