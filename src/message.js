@@ -1,5 +1,3 @@
-import * as yup from 'yup';
-
 const yupMessages = {
   mixed: {
     default: 'Произошла ошибка при загрузке RSS-потока',
@@ -12,6 +10,5 @@ const yupMessages = {
     notValue: 'Поле не должно быть пустым',
   },
 };
-yup.setLocale(yupMessages);
 
 export default yupMessages;

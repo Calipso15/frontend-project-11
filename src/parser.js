@@ -1,8 +1,7 @@
 import Axios from 'axios';
 import { Modal } from 'bootstrap';
 import _ from 'lodash';
-import i18n from 'i18next';
-import yupMessages from './message';
+import i18n from './init';
 import { createFeedContainer, createPostContainer } from './addFeedPost';
 
 let modal;
@@ -80,7 +79,7 @@ function checkForNewPosts(url) {
 
       createListBatton(newUniquePosts);
     })
-    .catch(() => i18n.t(yupMessages.mixed.default));
+    .catch(() => i18n.t('mixed.default'));
 }
 
 function loadRSSFeed(url) {
@@ -111,7 +110,7 @@ function loadRSSFeed(url) {
         checkForNewPosts(url);
       }, 5000);
     })
-    .catch(() => i18n.t(yupMessages.mixed.default));
+    .catch(() => i18n.t('mixed.default'));
 }
 
 export default loadRSSFeed;

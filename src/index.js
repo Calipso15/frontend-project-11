@@ -1,6 +1,5 @@
 import './styles.scss';
-import i18n from 'i18next';
-import yupMessages from './message';
+import i18n from './init';
 import watchedState from './view';
 import { showError } from './feedback';
 
@@ -16,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
       watchedState.rssFeedUrl = inputValue;
     } else {
       watchedState.isValid = false;
-      watchedState.errorMessage = i18n.t(yupMessages.string.notValue);
+      watchedState.errorMessage = i18n.t('string.notValue');
       showError(input, feedback, watchedState.errorMessage);
     }
   });

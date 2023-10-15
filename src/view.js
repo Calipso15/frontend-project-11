@@ -1,28 +1,14 @@
 import onChange from 'on-change';
 import * as yup from 'yup';
-import i18n from 'i18next';
+import i18n from './init';
 import loadRSSFeed from './parser';
-import yupMessages from './message';
 import { showError, showSuccess } from './feedback';
 
 const validationSchema = yup.object().shape({
   rssFeedUrl: yup
     .string()
-    .url(yupMessages.string.notCorrectUrl)
+    .url(i18n.t('string.notCorrectUrl'))
     .required('Обязательное поле'),
-});
-
-i18n.init({
-  lng: 'ru',
-  debug: true,
-  resources: {
-    ru: {
-      translation: {
-        ...yupMessages.mixed,
-        ...yupMessages.string,
-      },
-    },
-  },
 });
 
 const state = {
@@ -47,10 +33,10 @@ const fetchAndHandleResponse = (inputValue, input, feedback) => {
       const htmlCode = data.contents;
       if (!htmlCode.includes('<rss')) {
         state.isValid = false;
-        state.errorMessage = i18n.t(yupMessages.string.notValidateUrl);
+        state.errorMessage = i18n.t('string.notValidateUrl');
         showError(input, feedback, state.errorMessage);
       } else {
-        showSuccess(input, feedback, i18n.t(yupMessages.string.rssLoaded));
+        showSuccess(input, feedback, i18n.t('string.rssLoaded'));
         input.focus();
         const inputVal = input;
         inputVal.value = '';
@@ -63,7 +49,7 @@ const fetchAndHandleResponse = (inputValue, input, feedback) => {
       }
     })
     .catch(() => {
-      handleErrors(input, feedback, i18n.t(yupMessages.ru.default));
+      handleErrors(input, feedback, i18n.t('mixed.default'));
     });
 };
 
@@ -80,7 +66,7 @@ const watchedState = onChange(state, (path) => {
       validationSchema.validateSync({ rssFeedUrl: inputValue });
       if (state.rssFeeds.includes(inputValue)) {
         state.isValid = false;
-        state.errorMessage = i18n.t(yupMessages.string.rssAlreadyExists);
+        state.errorMessage = i18n.t('string.rssAlreadyExists');
 
         showError(input, feedback, state.errorMessage);
         return;
@@ -88,7 +74,7 @@ const watchedState = onChange(state, (path) => {
 
       fetchAndHandleResponse(inputValue, input, feedback);
     } catch (error) {
-      handleErrors(input, feedback, i18n.t(yupMessages.string.notCorrectUrl));
+      handleErrors(input, feedback, i18n.t('string.notCorrectUrl'));
     }
   }
 });
