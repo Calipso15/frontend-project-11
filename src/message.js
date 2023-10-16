@@ -7,7 +7,7 @@ const yupMessages = {
     rssAlreadyExists: 'RSS уже существует',
     notValidateUrl: 'Ресурс не содержит валидный RSS',
     rssLoaded: 'RSS успешно загружен',
-    notValue: 'Поле не должно быть пустым',
+    notValue: 'Не должно быть пустым',
   },
 };
 
