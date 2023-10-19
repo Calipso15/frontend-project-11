@@ -1,5 +1,3 @@
-import i18n from 'i18next';
-
 const showSuccess = (input, feedback, successMessage) => {
   const feedbackShow = feedback;
   input.classList.remove('is-invalid');
@@ -18,7 +16,6 @@ const showError = (input, feedback, errorMessage) => {
 };
 
 function errorNetwork(errorMessage) {
-  const localizedErrorMessage = i18n.t(errorMessage);
-  document.querySelector('.feedback').textContent = localizedErrorMessage;
+  document.querySelector('.feedback').textContent = errorMessage;
 }
 export { showError, showSuccess, errorNetwork };
