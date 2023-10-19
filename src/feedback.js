@@ -3,7 +3,7 @@ const showSuccess = (input, feedback, successMessage) => {
   input.classList.remove('is-invalid');
   feedback.classList.remove('text-danger');
   feedback.classList.add('text-success');
-  feedbackShow.textContent = successMessage;
+  feedbackShow.textContent = 'RSS успешно загружен';
 };
 
 const showError = (input, feedback, errorMessage) => {
