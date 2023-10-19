@@ -1,6 +1,6 @@
 const yupMessages = {
   mixed: {
-    default: 'Произошла ошибка при загрузке RSS-потока',
+    default: 'Ошибка сети',
   },
   string: {
     notCorrectUrl: 'Ссылка должна быть валидным URL',
