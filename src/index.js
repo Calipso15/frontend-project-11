@@ -12,7 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const inputValue = input.value.trim();
     if (inputValue) {
-      watchedState.rssFeedUrl = inputValue;
+      if (watchedState.rssFeeds.includes(inputValue)) {
+        watchedState.isValid = false;
+        watchedState.errorMessage = i18n.t('string.rssAlreadyExists');
+        showError(input, feedback, watchedState.errorMessage);
+      } else {
+        watchedState.isValid = true;
+        watchedState.errorMessage = '';
+        watchedState.rssFeedUrl = inputValue;
+        input.value = '';
+      }
     } else {
       watchedState.isValid = false;
       watchedState.errorMessage = i18n.t('string.notValue');

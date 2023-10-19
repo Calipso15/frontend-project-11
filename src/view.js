@@ -51,7 +51,6 @@ const fetchAndHandleResponse = (inputValue, input, feedback) => {
       handleErrors(input, feedback, i18n.t('mixed.default'));
     });
 };
-
 const input = document.getElementById('url-input');
 const feedback = document.querySelector('.feedback');
 
@@ -66,16 +65,13 @@ const watchedState = onChange(state, (path) => {
       if (state.rssFeeds.includes(inputValue)) {
         state.isValid = false;
         state.errorMessage = i18n.t('string.rssAlreadyExists');
-
         showError(input, feedback, state.errorMessage);
         return;
       }
-
       fetchAndHandleResponse(inputValue, input, feedback);
     } catch (error) {
       handleErrors(input, feedback, i18n.t('string.notCorrectUrl'));
     }
   }
 });
-
 export default watchedState;
