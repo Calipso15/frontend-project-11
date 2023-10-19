@@ -7,8 +7,7 @@ import { showError, showSuccess } from './feedback';
 const validationSchema = yup.object().shape({
   rssFeedUrl: yup
     .string()
-    .url(i18n.t('string.notCorrectUrl'))
-    .required('Обязательное поле'),
+    .url(i18n.t('string.notCorrectUrl')),
 });
 
 const state = {
@@ -25,7 +24,7 @@ const handleErrors = (input, feedback, errorMessage) => {
 };
 
 const fetchAndHandleResponse = (inputValue, input, feedback) => {
-  const corsProxyUrl = `https://allorigins.hexlet.app/get?url=${encodeURIComponent(inputValue)}`;
+  const corsProxyUrl = `https://allorigins.hexlet.app/get?url=${encodeURIComponent(inputValue)}&disableCache=true`;
 
   return fetch(corsProxyUrl)
     .then((response) => response.json())
