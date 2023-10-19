@@ -61,6 +61,7 @@ function createListBatton(items) {
     });
   });
 }
+
 const newPosts = [];
 const addedPosts = [];
 
@@ -86,13 +87,13 @@ function loadRSSFeed(url) {
   if (modal) {
     modal.hide();
   }
-  return Axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`)
+  return Axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`)
     .then((response) => {
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data.contents, 'text/xml');
 
-      const title = xmlDoc.querySelector('channel > title').textContent;
-      const description = xmlDoc.querySelector('channel > description').textContent;
+      const title = xmlDoc.querySelector('channel > title').textContent.trim();
+      const description = xmlDoc.querySelector('channel > description').textContent.trim();
       createPostContainer();
       const items = xmlDoc.querySelectorAll('item');
       items.forEach((item) => {
@@ -101,7 +102,6 @@ function loadRSSFeed(url) {
       });
 
       createListBatton(items);
-
       createFeedContainer(title, description);
 
       checkForNewPosts(url);
