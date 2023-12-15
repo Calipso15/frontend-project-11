@@ -1,116 +1,81 @@
-import Axios from 'axios';
-import { Modal } from 'bootstrap';
 import _ from 'lodash';
-import i18n from './init';
-import { createFeedContainer, createPostContainer } from './addFeedPost';
 
-let modal;
+const fetchAndParseXML = (url) => {
+  const corsProxyUrl = `https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`;
 
-function showModal(postTitle, postContent, postLink) {
-  const modalTitle = document.querySelector('.modal-title');
-  const modalBody = document.querySelector('.modal-body');
-  const readMoreButton = document.querySelector('.btn-primary');
-  readMoreButton.href = postLink;
-  modalTitle.textContent = postTitle;
-  modalBody.textContent = postContent;
+  return fetch(corsProxyUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      const xmlContent = data.contents;
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+      return xmlDoc;
+    });
+};
 
-  modal.show();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const modalElement = document.getElementById('modal');
-  modal = new Modal(modalElement);
+const extractPostData = (items) => Array.from(items).map((item) => {
+  const postLink = item.querySelector('link').textContent;
+  const postTitle = item.querySelector('title').textContent;
+  const postDescription = item.querySelector('description').textContent;
+  const postId = _.uniqueId();
+  return {
+    postId,
+    postTitle,
+    postDescription,
+    postLink,
+  };
 });
 
-function createListBatton(items) {
-  const postsListElement = document.createElement('ul');
-  postsListElement.classList.add('list-group', 'border-0', 'rounded-0');
-  items.forEach((item, index) => {
-    const postTitle = item.querySelector('title').textContent;
-    const postLink = item.querySelector('link').textContent;
+const checkFeedsForNewPosts = (url, watchedState) => {
+  const state = watchedState;
 
-    const postItemElement = document.createElement('li');
-    postItemElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
-    const linkId = `link-${index}`;
-    const postLinkElement = document.createElement('a');
-    postLinkElement.id = linkId;
-    postLinkElement.classList.add('fw-bold');
-    postLinkElement.textContent = postTitle;
-    postLinkElement.href = postLink;
-    postLinkElement.target = '_blank';
-    postItemElement.appendChild(postLinkElement);
-    const ulPosts = document.querySelector('.rounded-0');
-    ulPosts.appendChild(postItemElement);
-
-    const createBatton = document.createElement('button');
-    createBatton.id = linkId;
-    createBatton.setAttribute('type', 'button');
-    createBatton.classList.add('btn', 'btn-outline-primary', 'btn-sm');
-    createBatton.setAttribute('data-bs-toggle', 'modal');
-    createBatton.setAttribute('data-bs-target', '#modal');
-    createBatton.textContent = 'Просмотр';
-    postItemElement.append(createBatton);
-
-    createBatton.addEventListener('click', () => {
-      postLinkElement.classList.remove('fw-bold');
-      postLinkElement.classList.add('fw-normal', 'link-secondary');
-      const postTitle1 = item.querySelector('title').textContent;
-      const postContent = item.querySelector('description').textContent;
-
-      showModal(postTitle1, postContent, postLink);
-    });
-  });
-}
-
-const newPosts = [];
-const addedPosts = [];
-
-function checkForNewPosts(url) {
-  return Axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`)
-    .then((response) => {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(response.data.contents, 'text/xml');
-      const items = Array.from(xmlDoc.querySelectorAll('item'));
-      newPosts.length = 0;
-      const newPostLinks = Array.from(items, (item) => item.querySelector('link').textContent);
-      const uniqueNewPostLinks = _.difference(newPostLinks, addedPosts);
-      const newUniquePosts = items.filter((item) => uniqueNewPostLinks.includes(item.querySelector('link').textContent));
-      newPosts.push(...newUniquePosts);
-      addedPosts.push(...uniqueNewPostLinks);
-
-      createListBatton(newUniquePosts);
-    })
-    .catch(() => i18n.t('mixed.default'));
-}
-
-function loadRSSFeed(url) {
-  if (modal) {
-    modal.hide();
-  }
-  return Axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`)
-    .then((response) => {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(response.data.contents, 'text/xml');
-
-      const title = xmlDoc.querySelector('channel > title').textContent.trim();
-      const description = xmlDoc.querySelector('channel > description').textContent.trim();
-      createPostContainer();
+  return fetchAndParseXML(url)
+    .then((xmlDoc) => {
       const items = xmlDoc.querySelectorAll('item');
-      items.forEach((item) => {
-        const postLink = item.querySelector('link').textContent;
-        addedPosts.push(postLink);
-      });
+      const newParsPost = extractPostData(items);
 
-      createListBatton(items);
-      createFeedContainer(title, description);
+      const newPosts = [...newParsPost];
 
-      checkForNewPosts(url);
-
-      setInterval(() => {
-        checkForNewPosts(url);
-      }, 5000);
+      const uniqueNewPostLinks = _.differenceWith(
+        newPosts,
+        state.posts,
+        (newPost, existingPost) => newPost.postLink === existingPost.postLink,
+      );
+      state.posts.push(...uniqueNewPostLinks);
     })
-    .catch(() => i18n.t('mixed.default'));
-}
+    .catch(() => []);
+};
 
-export default loadRSSFeed;
+const checkIsRssAndParse = (url, watchedState) => {
+  const state = watchedState;
+
+  if (state.intervalId) {
+    clearInterval(state.intervalId);
+  }
+
+  return fetchAndParseXML(url)
+    .then((xmlDoc) => {
+      if (xmlDoc.querySelector('rss')) {
+        state.posts = [];
+        state.feeds = [];
+        state.rssUrl.push(url);
+
+        const title = xmlDoc.querySelector('channel > title').textContent.trim();
+        const description = xmlDoc.querySelector('channel > description').textContent.trim();
+
+        const items = xmlDoc.querySelectorAll('item');
+        state.posts.push(...extractPostData(items));
+
+        state.feeds.push({ title, description });
+        state.intervalId = setInterval(() => {
+          checkFeedsForNewPosts(url, state);
+        }, 5000);
+
+        return true;
+      }
+      return false;
+    })
+    .catch(() => false);
+};
+
+export default checkIsRssAndParse;
