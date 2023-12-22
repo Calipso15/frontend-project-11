@@ -49,7 +49,10 @@ const showModalController = (diff) => {
       postLinkElement.classList.remove('fw-bold');
       postLinkElement.classList.add('fw-normal', 'link-secondary');
 
-      showModal(post.postTitle, post.postDescription, post.postLink);
+      if (post) {
+        const { postTitle, postDescription, postLink } = post;
+        showModal(postTitle, postDescription, postLink);
+      }
     }
   });
 };
