@@ -29,53 +29,53 @@ const extractPostData = (items) => Array.from(items).map((item) => {
 const checkFeedsForNewPosts = (url, watchedState) => {
   const state = watchedState;
 
-  return fetchAndParseXML(url)
-    .then((xmlDoc) => {
-      const items = xmlDoc.querySelectorAll('item');
-      const newParsPost = extractPostData(items);
+  return new Promise((resolve) => {
+    fetchAndParseXML(url)
+      .then((xmlDoc) => {
+        const items = xmlDoc.querySelectorAll('item');
+        const newParsPost = extractPostData(items);
 
-      const newPosts = [...newParsPost];
+        const newPosts = [...newParsPost];
 
-      const uniqueNewPostLinks = _.differenceWith(
-        newPosts,
-        state.posts,
-        (newPost, existingPost) => newPost.postLink === existingPost.postLink,
-      );
-      state.posts.push(...uniqueNewPostLinks);
-    })
-    .catch(() => []);
+        const uniqueNewPostLinks = _.differenceWith(
+          newPosts,
+          state.posts,
+          (newPost, existingPost) => newPost.postLink === existingPost.postLink,
+        );
+        state.posts.push(...uniqueNewPostLinks);
+        resolve();
+      })
+      .catch(() => resolve())
+      .finally(() => setTimeout(() => checkFeedsForNewPosts(url, watchedState), 5000));
+  });
 };
 
 const checkIsRssAndParse = (url, watchedState) => {
   const state = watchedState;
 
-  if (state.intervalId) {
-    clearInterval(state.intervalId);
-  }
+  return new Promise((resolve, reject) => {
+    fetchAndParseXML(url)
+      .then((xmlDoc) => {
+        if (xmlDoc.querySelector('rss')) {
+          state.rssUrl.push(url);
 
-  return fetchAndParseXML(url)
-    .then((xmlDoc) => {
-      if (xmlDoc.querySelector('rss')) {
-        state.posts = [];
-        state.feeds = [];
-        state.rssUrl.push(url);
+          const title = xmlDoc.querySelector('channel > title').textContent.trim();
+          const description = xmlDoc.querySelector('channel > description').textContent.trim();
+          const feedsId = _.uniqueId();
 
-        const title = xmlDoc.querySelector('channel > title').textContent.trim();
-        const description = xmlDoc.querySelector('channel > description').textContent.trim();
+          const items = xmlDoc.querySelectorAll('item');
+          state.posts.push(...extractPostData(items));
 
-        const items = xmlDoc.querySelectorAll('item');
-        state.posts.push(...extractPostData(items));
-
-        state.feeds.push({ title, description });
-        state.intervalId = setInterval(() => {
-          checkFeedsForNewPosts(url, state);
-        }, 5000);
-
-        return true;
-      }
-      return false;
-    })
-    .catch(() => false);
+          state.feeds.push({ feedsId, title, description });
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
 };
 
-export default checkIsRssAndParse;
+export { checkIsRssAndParse, checkFeedsForNewPosts };

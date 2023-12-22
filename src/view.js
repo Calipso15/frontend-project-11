@@ -1,59 +1,19 @@
 import { Modal } from 'bootstrap';
+import showLink from './controller';
 
 const feedback = document.querySelector('.feedback');
 const input = document.getElementById('url-input');
 const postsContainer = document.querySelector('.posts');
 const feedsContainer = document.querySelector('.feeds');
+const button = document.querySelector('button[type="submit"]');
 
-const renderMessage = (updatedState) => {
-  if (updatedState.isValid) {
-    input.classList.remove('is-invalid');
-    feedback.classList.remove('text-danger');
-    feedback.classList.add('text-success');
-    feedback.textContent = updatedState.message;
-    input.value = '';
-    input.focus();
-  } else {
-    input.classList.add('is-invalid');
-    feedback.classList.remove('text-success');
-    feedback.classList.add('text-danger');
-    feedback.textContent = updatedState.message;
-    input.focus();
-  }
-};
-
-const renderFeeds = (updatedState) => {
-  updatedState.feeds.forEach((feed) => {
-    const divFeeds = document.createElement('div');
-    divFeeds.classList.add('card', 'border-0');
-    feedsContainer.appendChild(divFeeds);
-
-    const divFeedsBody = document.createElement('div');
-    divFeedsBody.classList.add('card-body');
-    divFeeds.appendChild(divFeedsBody);
-
-    const tFeeds = document.createElement('h2');
-    tFeeds.classList.add('card-title', 'h4');
-    tFeeds.textContent = 'Фиды';
-    divFeedsBody.appendChild(tFeeds);
-
-    const ulFeeds = document.createElement('ul');
-    ulFeeds.classList.add('list-group', 'border-0', 'rounded-0');
-    divFeeds.appendChild(ulFeeds);
-
-    const liFeeds = document.createElement('li');
-    liFeeds.classList.add('list-group-item', 'border-0', 'border-end-0');
-    ulFeeds.appendChild(liFeeds);
-
-    const h3 = document.createElement('h3');
-    h3.classList.add('h6', 'm-0');
-    h3.textContent = feed.title;
-    liFeeds.appendChild(h3);
-
-    const p = document.createElement('p');
-    p.classList.add('m-0', 'small', 'text-black-50');
-    p.textContent = feed.description;
-    liFeeds.appendChild(p);
+const setupModalController = (modalElement) => {
+  modalElement.addEventListener('hidden.bs.modal', () => {
+    document.body.style = '';
+    const modalBackdrop = document.querySelector('.modal-backdrop');
+    if (modalBackdrop) {
+      modalBackdrop.remove();
+    }
   });
 };
 
@@ -70,12 +30,104 @@ const showModal = (postTitle, postContent, postLink) => {
 
   modal.show();
 
-  modalElement.addEventListener('hidden.bs.modal', () => {
-    document.body.style = '';
-    const modalBackdrop = document.querySelector('.modal-backdrop');
-    if (modalBackdrop) {
-      modalBackdrop.remove();
+  setupModalController(modalElement);
+};
+
+const findPostById = (postId, diff) => diff.find((post) => post.postId === postId);
+
+const showModalController = (diff) => {
+  const container = document.getElementById('ul-container');
+
+  container.addEventListener('click', (e) => {
+    const { target } = e;
+
+    if (target.classList.contains('btn-outline-primary')) {
+      const postId = target.dataset.id;
+      const post = findPostById(postId, diff);
+      const postLinkElement = document.querySelector(`a[data-id="${postId}"]`);
+
+      postLinkElement.classList.remove('fw-bold');
+      postLinkElement.classList.add('fw-normal', 'link-secondary');
+
+      showModal(post.postTitle, post.postDescription, post.postLink);
     }
+  });
+};
+
+const renderStatus = (state) => {
+  switch (state.registrationProcess.state) {
+    case 'filling':
+      input.readOnly = false;
+      button.disabled = false;
+      break;
+    case 'processing':
+      input.readOnly = true;
+      button.disabled = true;
+      break;
+    case 'success':
+      input.readOnly = false;
+      button.disabled = false;
+      break;
+    default:
+      break;
+  }
+};
+
+const renderMessage = (updatedState) => new Promise((resolve) => {
+  setTimeout(() => {
+    if (updatedState.isValid) {
+      input.classList.remove('is-invalid');
+      feedback.classList.remove('text-danger');
+      feedback.classList.add('text-success');
+      feedback.textContent = updatedState.message;
+      input.value = '';
+      input.focus();
+    } else {
+      input.classList.add('is-invalid');
+      feedback.classList.remove('text-success');
+      feedback.classList.add('text-danger');
+      feedback.textContent = updatedState.message;
+      input.focus();
+    }
+    resolve();
+  }, 0);
+});
+
+const titleFeeds = () => {
+  const divFeeds = document.createElement('div');
+  divFeeds.classList.add('card', 'border-0');
+  feedsContainer.appendChild(divFeeds);
+
+  const divFeedsBody = document.createElement('div');
+  divFeedsBody.classList.add('card-body');
+  divFeeds.appendChild(divFeedsBody);
+
+  const tFeeds = document.createElement('h2');
+  tFeeds.classList.add('card-title', 'h4');
+  tFeeds.textContent = 'Фиды';
+  divFeedsBody.appendChild(tFeeds);
+  const ulFeeds = document.createElement('ul');
+  ulFeeds.setAttribute('id', 'feeds-container');
+  ulFeeds.classList.add('list-group', 'border-0', 'rounded-0');
+  divFeeds.appendChild(ulFeeds);
+};
+
+const renderFeeds = (feeds) => {
+  const ulFeeds = document.getElementById('feeds-container');
+  feeds.forEach((feed) => {
+    const liFeeds = document.createElement('li');
+    liFeeds.classList.add('list-group-item', 'border-0', 'border-end-0');
+    ulFeeds.appendChild(liFeeds);
+
+    const h3 = document.createElement('h3');
+    h3.classList.add('h6', 'm-0');
+    h3.textContent = feed.title;
+    liFeeds.appendChild(h3);
+
+    const p = document.createElement('p');
+    p.classList.add('m-0', 'small', 'text-black-50');
+    p.textContent = feed.description;
+    liFeeds.appendChild(p);
   });
 };
 
@@ -104,46 +156,38 @@ const renderPost = (diff) => {
   diff.forEach((item) => {
     const postItemElement = document.createElement('li');
     postItemElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
-    const linkId = `link-${item.postId}`;
     const postLinkElement = document.createElement('a');
-    postLinkElement.id = linkId;
     postLinkElement.classList.add('fw-bold');
     postLinkElement.textContent = item.postTitle;
     postLinkElement.href = item.postLink;
     postLinkElement.target = '_blank';
+    postLinkElement.dataset.id = item.postId;
+
     postItemElement.appendChild(postLinkElement);
     container.appendChild(postItemElement);
+    showLink(postLinkElement);
 
-    postLinkElement.addEventListener('click', () => {
-      postLinkElement.classList.remove('fw-bold');
-      postLinkElement.classList.add('fw-normal', 'link-secondary');
-    });
+    const createButton = document.createElement('button');
+    createButton.setAttribute('type', 'button');
+    createButton.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+    createButton.setAttribute('data-bs-toggle', 'modal');
+    createButton.setAttribute('data-bs-target', '#modal');
+    createButton.textContent = 'Просмотр';
+    createButton.dataset.id = item.postId;
 
-    const createBatton = document.createElement('button');
-    createBatton.id = linkId;
-    createBatton.setAttribute('type', 'button');
-    createBatton.classList.add('btn', 'btn-outline-primary', 'btn-sm');
-    createBatton.setAttribute('data-bs-toggle', 'modal');
-    createBatton.setAttribute('data-bs-target', '#modal');
-    createBatton.textContent = 'Просмотр';
-    postItemElement.append(createBatton);
-
-    createBatton.addEventListener('click', () => {
-      postLinkElement.classList.remove('fw-bold');
-      postLinkElement.classList.add('fw-normal', 'link-secondary');
-      const postTitle1 = item.postTitle;
-      const postContent = item.postDescription;
-
-      showModal(postTitle1, postContent, item.postLink);
-    });
+    postItemElement.append(createButton);
   });
+  showModalController(diff);
 };
 
 const renderFeedsAndSuccessMessage = (updatedState) => {
-  renderFeeds(updatedState);
+  titleFeeds();
+  renderFeeds(updatedState.feeds);
   renderMessage(updatedState);
 };
 
 export {
-  renderMessage, renderFeedsAndSuccessMessage, renderPost, titlePost, renderFeeds,
+  renderMessage,
+  renderStatus,
+  renderFeedsAndSuccessMessage, renderPost, titlePost, renderFeeds,
 };
