@@ -43,38 +43,54 @@ const state = {
 
 const postsContainer = document.querySelector('.posts');
 
+const handleIsValidChange = (watchedState) => {
+  renderMessage(watchedState);
+};
+
+const handleFeedsChange = (watchedState, value, prevValue) => {
+  if (!prevValue.length) {
+    renderFeedsAndSuccessMessage(watchedState);
+  } else {
+    const diff = _.differenceWith(
+      value,
+      prevValue,
+      (val, prev) => val.feedsId === prev.feedsId,
+    );
+    renderFeeds(diff);
+  }
+};
+
+const handlePostsChange = (value, prevValue) => {
+  if (value.length && !prevValue.length) {
+    createTitle(postsContainer, 'Посты', 'posts-container');
+  }
+
+  const diff = _.differenceWith(
+    value,
+    prevValue,
+    (val, prev) => val.postId === prev.postId,
+  );
+
+  renderPost(diff);
+};
+
+const handleRegistrationProcessStateChange = (watchedState) => {
+  renderStatus(watchedState);
+};
+
 const watchedState = onChange(state, function render(path, value, prevValue) {
   switch (path) {
     case 'isValid':
-      renderMessage(this);
+      handleIsValidChange(this);
       break;
-    case 'feeds': {
-      if (!prevValue.length) {
-        renderFeedsAndSuccessMessage(this);
-      } else {
-        const diff = _.differenceWith(
-          value,
-          prevValue,
-          (val, prev) => val.feedsId === prev.feedsId,
-        );
-        renderFeeds(diff);
-      }
+    case 'feeds':
+      handleFeedsChange(this, value, prevValue);
       break;
-    }
-    case 'posts': {
-      if (value.length && !prevValue.length) {
-        createTitle(postsContainer, 'Посты', 'posts-container');
-      }
-      const diff = _.differenceWith(
-        value,
-        prevValue,
-        (val, prev) => val.postId === prev.postId,
-      );
-      renderPost(diff);
+    case 'posts':
+      handlePostsChange(this, value, prevValue);
       break;
-    }
     case 'registrationProcess.state':
-      renderStatus(state);
+      handleRegistrationProcessStateChange(this);
       break;
     default:
       renderMessage(this);
