@@ -43,10 +43,6 @@ const state = {
 
 const postsContainer = document.querySelector('.posts');
 
-const handleIsValidChange = (watchedState) => {
-  renderMessage(watchedState);
-};
-
 const handleFeedsChange = (watchedState, value, prevValue) => {
   if (!prevValue.length) {
     renderFeedsAndSuccessMessage(watchedState);
@@ -64,33 +60,29 @@ const handlePostsChange = (value, prevValue) => {
   if (value.length && !prevValue.length) {
     createTitle(postsContainer, 'Посты', 'posts-container');
   }
-
   const diff = _.differenceWith(
     value,
     prevValue,
     (val, prev) => val.postId === prev.postId,
   );
-
   renderPost(diff);
-};
-
-const handleRegistrationProcessStateChange = (watchedState) => {
-  renderStatus(watchedState);
 };
 
 const watchedState = onChange(state, function render(path, value, prevValue) {
   switch (path) {
     case 'isValid':
-      handleIsValidChange(this);
+      renderMessage(this);
       break;
-    case 'feeds':
+    case 'feeds': {
       handleFeedsChange(this, value, prevValue);
       break;
-    case 'posts':
-      handlePostsChange(this, value, prevValue);
+    }
+    case 'posts': {
+      handlePostsChange(value, prevValue);
       break;
+    }
     case 'registrationProcess.state':
-      handleRegistrationProcessStateChange(this);
+      renderStatus(state);
       break;
     default:
       renderMessage(this);
