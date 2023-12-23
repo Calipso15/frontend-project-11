@@ -3,7 +3,6 @@ import showLink from './controller';
 
 const feedback = document.querySelector('.feedback');
 const input = document.getElementById('url-input');
-const postsContainer = document.querySelector('.posts');
 const feedsContainer = document.querySelector('.feeds');
 const button = document.querySelector('button[type="submit"]');
 
@@ -36,7 +35,7 @@ const showModal = (postTitle, postContent, postLink) => {
 const findPostById = (postId, diff) => diff.find((post) => post.postId === postId);
 
 const showModalController = (diff) => {
-  const container = document.getElementById('ul-container');
+  const container = document.getElementById('posts-container');
 
   container.addEventListener('click', (e) => {
     const { target } = e;
@@ -96,23 +95,24 @@ const renderMessage = (updatedState) => new Promise((resolve) => {
   }, 0);
 });
 
-const titleFeeds = () => {
-  const divFeeds = document.createElement('div');
-  divFeeds.classList.add('card', 'border-0');
-  feedsContainer.appendChild(divFeeds);
+const createTitle = (container, titleText, listId) => {
+  const divElement = document.createElement('div');
+  divElement.classList.add('card', 'border-0');
+  container.appendChild(divElement);
 
-  const divFeedsBody = document.createElement('div');
-  divFeedsBody.classList.add('card-body');
-  divFeeds.appendChild(divFeedsBody);
+  const divBody = document.createElement('div');
+  divBody.classList.add('card-body');
+  divElement.appendChild(divBody);
 
-  const tFeeds = document.createElement('h2');
-  tFeeds.classList.add('card-title', 'h4');
-  tFeeds.textContent = 'Фиды';
-  divFeedsBody.appendChild(tFeeds);
-  const ulFeeds = document.createElement('ul');
-  ulFeeds.setAttribute('id', 'feeds-container');
-  ulFeeds.classList.add('list-group', 'border-0', 'rounded-0');
-  divFeeds.appendChild(ulFeeds);
+  const titleElement = document.createElement('h2');
+  titleElement.classList.add('card-title', 'h4');
+  titleElement.textContent = titleText;
+  divBody.appendChild(titleElement);
+
+  const ulElement = document.createElement('ul');
+  ulElement.setAttribute('id', listId);
+  ulElement.classList.add('list-group', 'border-0', 'rounded-0');
+  divElement.appendChild(ulElement);
 };
 
 const renderFeeds = (feeds) => {
@@ -134,28 +134,9 @@ const renderFeeds = (feeds) => {
   });
 };
 
-const titlePost = () => {
-  const divPost = document.createElement('div');
-  divPost.classList.add('card', 'border-0');
-  postsContainer.appendChild(divPost);
-
-  const divBody = document.createElement('div');
-  divBody.classList.add('card-body');
-  divPost.appendChild(divBody);
-
-  const t = document.createElement('h2');
-  t.classList.add('card-title', 'h4');
-  t.textContent = 'Посты';
-  divBody.appendChild(t);
-
-  const ulPosts = document.createElement('ul');
-  ulPosts.setAttribute('id', 'ul-container');
-  ulPosts.classList.add('list-group', 'border-0', 'rounded-0');
-  divPost.appendChild(ulPosts);
-};
-
 const renderPost = (diff) => {
-  const container = document.getElementById('ul-container');
+  const container = document.getElementById('posts-container');
+
   diff.forEach((item) => {
     const postItemElement = document.createElement('li');
     postItemElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
@@ -184,7 +165,7 @@ const renderPost = (diff) => {
 };
 
 const renderFeedsAndSuccessMessage = (updatedState) => {
-  titleFeeds();
+  createTitle(feedsContainer, 'Фиды', 'feeds-container');
   renderFeeds(updatedState.feeds);
   renderMessage(updatedState);
 };
@@ -192,5 +173,5 @@ const renderFeedsAndSuccessMessage = (updatedState) => {
 export {
   renderMessage,
   renderStatus,
-  renderFeedsAndSuccessMessage, renderPost, titlePost, renderFeeds,
+  renderFeedsAndSuccessMessage, renderPost, createTitle, renderFeeds,
 };

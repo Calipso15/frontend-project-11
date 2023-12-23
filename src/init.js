@@ -5,7 +5,7 @@ import onChange from 'on-change';
 import yupMessages from './locales/message';
 import { checkIsRssAndParse, checkFeedsForNewPosts } from './parser';
 import {
-  renderMessage, renderStatus, renderFeeds, renderPost, renderFeedsAndSuccessMessage, titlePost,
+  renderMessage, renderStatus, renderFeeds, renderPost, renderFeedsAndSuccessMessage, createTitle,
 } from './view';
 
 const initI18n = () => new Promise((resolve, reject) => {
@@ -41,6 +41,8 @@ const state = {
   rssUrl: [],
 };
 
+const postsContainer = document.querySelector('.posts');
+
 const watchedState = onChange(state, function render(path, value, prevValue) {
   switch (path) {
     case 'isValid':
@@ -61,7 +63,7 @@ const watchedState = onChange(state, function render(path, value, prevValue) {
     }
     case 'posts': {
       if (value.length && !prevValue.length) {
-        titlePost();
+        createTitle(postsContainer, 'Посты', 'posts-container');
       }
       const diff = _.differenceWith(
         value,
