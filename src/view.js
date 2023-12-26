@@ -1,10 +1,24 @@
 import { Modal } from 'bootstrap';
+import _ from 'lodash';
 import showLink from './controller';
 
-const feedback = document.querySelector('.feedback');
-const input = document.getElementById('url-input');
-const feedsContainer = document.querySelector('.feeds');
-const button = document.querySelector('button[type="submit"]');
+const elements = {
+  form: document.querySelector('.rss-form'),
+  feedback: document.querySelector('.feedback'),
+  input: document.getElementById('url-input'),
+  postsContainer: document.querySelector('.posts'),
+  feedsContainer: document.querySelector('.feeds'),
+  ulFeeds: document.getElementById('feeds-container'),
+  ulPosts: document.getElementById('posts-container'),
+  button: document.querySelector('button[type="submit"]'),
+
+  modal: {
+    modalElement: document.getElementById('modal'),
+    modalTitle: document.querySelector('.modal-title'),
+    modalBody: document.querySelector('.modal-body'),
+    readMoreButton: document.querySelector('.btn-primary'),
+  },
+};
 
 const setupModalController = (modalElement) => {
   modalElement.addEventListener('hidden.bs.modal', () => {
@@ -17,26 +31,21 @@ const setupModalController = (modalElement) => {
 };
 
 const showModal = (postTitle, postContent, postLink) => {
-  const modalElement = document.getElementById('modal');
-  const modalTitle = document.querySelector('.modal-title');
-  const modalBody = document.querySelector('.modal-body');
-  const readMoreButton = document.querySelector('.btn-primary');
-  readMoreButton.href = postLink;
-  modalTitle.textContent = postTitle;
-  modalBody.textContent = postContent;
+  elements.modal.readMoreButton.href = postLink;
+  elements.modal.modalTitle.textContent = postTitle;
+  elements.modal.modalBody.textContent = postContent;
 
-  const modal = new Modal(modalElement);
+  const modal = new Modal(elements.modal.modalElement);
 
   modal.show();
 
-  setupModalController(modalElement);
+  setupModalController(elements.modal.modalElement);
 };
 
 const findPostById = (postId, diff) => diff.find((post) => post.postId === postId);
 
 const showModalController = (diff) => {
   const container = document.getElementById('posts-container');
-
   container.addEventListener('click', (e) => {
     const { target } = e;
 
@@ -56,40 +65,21 @@ const showModalController = (diff) => {
   });
 };
 
-const renderStatus = (state) => {
-  switch (state.registrationProcess.state) {
-    case 'filling':
-      input.readOnly = false;
-      button.disabled = false;
-      break;
-    case 'processing':
-      input.readOnly = true;
-      button.disabled = true;
-      break;
-    case 'success':
-      input.readOnly = false;
-      button.disabled = false;
-      break;
-    default:
-      break;
-  }
-};
-
 const renderMessage = (updatedState) => new Promise((resolve) => {
   setTimeout(() => {
     if (updatedState.isValid) {
-      input.classList.remove('is-invalid');
-      feedback.classList.remove('text-danger');
-      feedback.classList.add('text-success');
-      feedback.textContent = updatedState.message;
-      input.value = '';
-      input.focus();
+      elements.input.classList.remove('is-invalid');
+      elements.feedback.classList.remove('text-danger');
+      elements.feedback.classList.add('text-success');
+      elements.feedback.textContent = updatedState.message;
+      elements.input.value = '';
+      elements.input.focus();
     } else {
-      input.classList.add('is-invalid');
-      feedback.classList.remove('text-success');
-      feedback.classList.add('text-danger');
-      feedback.textContent = updatedState.message;
-      input.focus();
+      elements.input.classList.add('is-invalid');
+      elements.feedback.classList.remove('text-success');
+      elements.feedback.classList.add('text-danger');
+      elements.feedback.textContent = updatedState.message;
+      elements.input.focus();
     }
     resolve();
   }, 0);
@@ -111,7 +101,7 @@ const createTitle = (container, titleText, listId) => {
 
   const ulElement = document.createElement('ul');
   ulElement.setAttribute('id', listId);
-  ulElement.classList.add('list-group', 'border-0', 'rounded-0');
+  ulElement.classList.add('list-group', 'border-0', 'rounded-0', 'lala');
   divElement.appendChild(ulElement);
 };
 
@@ -165,13 +155,52 @@ const renderPost = (diff) => {
 };
 
 const renderFeedsAndSuccessMessage = (updatedState) => {
-  createTitle(feedsContainer, 'Фиды', 'feeds-container');
+  createTitle(elements.feedsContainer, 'Фиды', 'feeds-container');
   renderFeeds(updatedState.feeds);
   renderMessage(updatedState);
 };
 
-export {
-  renderMessage,
-  renderStatus,
-  renderFeedsAndSuccessMessage, renderPost, createTitle, renderFeeds,
+const handleFeedsChange = (watchedState, value, prevValue) => {
+  if (!prevValue.length) {
+    renderFeedsAndSuccessMessage(watchedState);
+  } else {
+    const diff = _.differenceWith(
+      value,
+      prevValue,
+      (val, prev) => val.feedsId === prev.feedsId,
+    );
+    renderFeeds(diff);
+  }
 };
+
+const handlePostsChange = (value, prevValue) => {
+  if (value.length && !prevValue.length) {
+    createTitle(elements.postsContainer, 'Посты', 'posts-container');
+  }
+  const diff = _.differenceWith(
+    value,
+    prevValue,
+    (val, prev) => val.postId === prev.postId,
+  );
+  renderPost(diff);
+};
+
+const render = (state, path, value, prevValue) => {
+  switch (path) {
+    case 'isValid':
+      renderMessage(state);
+      break;
+    case 'feeds': {
+      handleFeedsChange(state, value, prevValue);
+      break;
+    }
+    case 'posts': {
+      handlePostsChange(value, prevValue);
+      break;
+    }
+    default:
+      renderMessage(state);
+  }
+};
+
+export default render;

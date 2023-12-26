@@ -1,15 +1,20 @@
 import _ from 'lodash';
+import axios from 'axios';
 
 const fetchAndParseXML = (url) => {
   const corsProxyUrl = `https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}&disableCache=true`;
 
-  return fetch(corsProxyUrl)
-    .then((response) => response.json())
-    .then((data) => {
-      const xmlContent = data.contents;
+  return axios.get(corsProxyUrl)
+    .then((response) => {
+      const xmlContent = response.data.contents;
+
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+
       return xmlDoc;
+    })
+    .catch(() => {
+      console.error('Произошла ошибка при парсинге XML:');
     });
 };
 

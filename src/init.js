@@ -1,39 +1,13 @@
-import _ from 'lodash';
 import i18n from 'i18next';
 import * as yup from 'yup';
 import onChange from 'on-change';
 import yupMessages from './locales/message';
 import { checkIsRssAndParse, checkFeedsForNewPosts } from './parser';
-import {
-  renderMessage, renderStatus, renderFeeds, renderPost, renderFeedsAndSuccessMessage, createTitle,
-} from './view';
-
-const initI18n = () => new Promise((resolve, reject) => {
-  i18n
-    .init({
-      lng: 'ru',
-      debug: false,
-      resources: {
-        ru: {
-          translation: yupMessages,
-        },
-      },
-    })
-    .then(() => {
-      resolve();
-    })
-    .catch((error) => {
-      reject(error);
-    });
-});
+import render from './view';
 
 const validationSchema = yup.string().url(i18n.t('string.notCorrectUrl'));
 
 const state = {
-  registrationProcess: {
-    state: 'filling',
-  },
-  inputValue: '',
   isValid: true,
   message: '',
   feeds: [],
@@ -41,52 +15,8 @@ const state = {
   rssUrl: [],
 };
 
-const postsContainer = document.querySelector('.posts');
-
-const handleFeedsChange = (watchedState, value, prevValue) => {
-  if (!prevValue.length) {
-    renderFeedsAndSuccessMessage(watchedState);
-  } else {
-    const diff = _.differenceWith(
-      value,
-      prevValue,
-      (val, prev) => val.feedsId === prev.feedsId,
-    );
-    renderFeeds(diff);
-  }
-};
-
-const handlePostsChange = (value, prevValue) => {
-  if (value.length && !prevValue.length) {
-    createTitle(postsContainer, 'Посты', 'posts-container');
-  }
-  const diff = _.differenceWith(
-    value,
-    prevValue,
-    (val, prev) => val.postId === prev.postId,
-  );
-  renderPost(diff);
-};
-
-const watchedState = onChange(state, function render(path, value, prevValue) {
-  switch (path) {
-    case 'isValid':
-      renderMessage(this);
-      break;
-    case 'feeds': {
-      handleFeedsChange(this, value, prevValue);
-      break;
-    }
-    case 'posts': {
-      handlePostsChange(value, prevValue);
-      break;
-    }
-    case 'registrationProcess.state':
-      renderStatus(state);
-      break;
-    default:
-      renderMessage(this);
-  }
+const watchedState = onChange(state, (path, value, prevValue) => {
+  render(state, path, value, prevValue);
 });
 
 const showMessage = (message, isValid) => {
@@ -100,50 +30,59 @@ const setupFormHandler = () => {
   const input = document.getElementById('url-input');
   const form = document.querySelector('.rss-form');
 
-  initI18n();
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    watchedState.registrationProcess.state = 'filling';
-
-    const inputValue = input.value.trim();
-    watchedState.inputValue = inputValue;
-
-    if (!inputValue) {
-      watchedState.registrationProcess.state = 'success';
-      showMessage('string.notValue', false);
-      return;
-    }
-
-    if (!validationSchema.isValidSync(inputValue)) {
-      watchedState.registrationProcess.state = 'success';
-      showMessage('string.notCorrectUrl', false);
-      return;
-    }
-
-    if (!checkIsNewRss(inputValue)) {
-      watchedState.registrationProcess.state = 'success';
-      showMessage('string.rssAlreadyExists', false);
-      return;
-    }
-    watchedState.registrationProcess.state = 'processing';
-    checkIsRssAndParse(inputValue, watchedState)
-      .then((isRss) => {
-        if (isRss) {
-          watchedState.registrationProcess.state = 'success';
-          showMessage('string.rssLoaded', true);
-        } else {
-          watchedState.registrationProcess.state = 'success';
-          showMessage('string.notRssUrl', false);
+  i18n
+    .init({
+      lng: 'ru',
+      debug: false,
+      resources: {
+        ru: {
+          translation: yupMessages,
+        },
+      },
+    })
+    .then(() => {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        input.readOnly = false;
+        const inputValue = input.value.trim();
+        setTimeout(() => checkFeedsForNewPosts(inputValue, watchedState), 5000);
+        if (!inputValue) {
+          input.readOnly = false;
+          showMessage('string.notValue', false);
+          return;
         }
-      })
-      .catch(() => {
-        watchedState.registrationProcess.state = 'success';
-        showMessage('mixed.default', false);
-      });
 
-    setTimeout(() => checkFeedsForNewPosts(inputValue, watchedState), 5000);
-  });
+        if (!validationSchema.isValidSync(inputValue)) {
+          input.readOnly = false;
+          showMessage('string.notCorrectUrl', false);
+          return;
+        }
+
+        if (!checkIsNewRss(inputValue)) {
+          input.readOnly = false;
+          showMessage('string.rssAlreadyExists', false);
+          return;
+        }
+        input.readOnly = true;
+        checkIsRssAndParse(inputValue, watchedState)
+          .then((isRss) => {
+            if (isRss) {
+              input.readOnly = false;
+              showMessage('string.rssLoaded', true);
+            } else {
+              input.readOnly = false;
+              showMessage('string.notRssUrl', false);
+            }
+          })
+          .catch(() => {
+            input.readOnly = false;
+            showMessage('mixed.default', false);
+          });
+      });
+    })
+    .catch(() => {
+      console.error('Ошибка инициализации i18next');
+    });
 };
 
 export { setupFormHandler, showMessage };
