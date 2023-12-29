@@ -1,24 +1,6 @@
 import { Modal } from 'bootstrap';
 import _ from 'lodash';
-import showLink from './controller';
-
-const elements = {
-  form: document.querySelector('.rss-form'),
-  feedback: document.querySelector('.feedback'),
-  input: document.getElementById('url-input'),
-  postsContainer: document.querySelector('.posts'),
-  feedsContainer: document.querySelector('.feeds'),
-  ulFeeds: document.getElementById('feeds-container'),
-  ulPosts: document.getElementById('posts-container'),
-  button: document.querySelector('button[type="submit"]'),
-
-  modal: {
-    modalElement: document.getElementById('modal'),
-    modalTitle: document.querySelector('.modal-title'),
-    modalBody: document.querySelector('.modal-body'),
-    readMoreButton: document.querySelector('.btn-primary'),
-  },
-};
+import onChange from 'on-change';
 
 const setupModalController = (modalElement) => {
   modalElement.addEventListener('hidden.bs.modal', () => {
@@ -30,56 +12,68 @@ const setupModalController = (modalElement) => {
   });
 };
 
-const showModal = (postTitle, postContent, postLink) => {
-  elements.modal.readMoreButton.href = postLink;
-  elements.modal.modalTitle.textContent = postTitle;
-  elements.modal.modalBody.textContent = postContent;
+const showModal = (elements, postTitle, postContent, postLink) => {
+  const updatedElements = { ...elements };
 
-  const modal = new Modal(elements.modal.modalElement);
+  updatedElements.modal.readMoreButton.href = postLink;
+  updatedElements.modal.modalTitle.textContent = postTitle;
+  updatedElements.modal.modalBody.textContent = postContent;
+
+  const modal = new Modal(updatedElements.modal.modalElement);
 
   modal.show();
 
-  setupModalController(elements.modal.modalElement);
+  setupModalController(updatedElements.modal.modalElement);
 };
 
 const findPostById = (postId, diff) => diff.find((post) => post.postId === postId);
 
-const showModalController = (diff) => {
+const changeViewedPostLinksColor = (postIds) => {
+  postIds.forEach((postId) => {
+    const postLinkElement = document.querySelector(`a[data-id="${postId}"]`);
+    if (postLinkElement) {
+      postLinkElement.classList.remove('fw-bold');
+      postLinkElement.classList.add('fw-normal', 'link-secondary');
+    }
+  });
+};
+
+const showModalController = (elements, state, diff) => {
   const container = document.getElementById('posts-container');
   container.addEventListener('click', (e) => {
     const { target } = e;
-
-    if (target.classList.contains('btn-outline-primary')) {
-      const postId = target.dataset.id;
-      const post = findPostById(postId, diff);
-      const postLinkElement = document.querySelector(`a[data-id="${postId}"]`);
-
-      postLinkElement.classList.remove('fw-bold');
-      postLinkElement.classList.add('fw-normal', 'link-secondary');
-
-      if (post) {
-        const { postTitle, postDescription, postLink } = post;
-        showModal(postTitle, postDescription, postLink);
+    if (target.dataset.id) {
+      if (target.tagName === 'BUTTON') {
+        const post = findPostById(target.dataset.id, diff);
+        if (post) {
+          const { postTitle, postDescription, postLink } = post;
+          showModal(elements, postTitle, postDescription, postLink);
+        }
+      }
+      if (!state.viewPosts.includes(target.dataset.id)) {
+        state.viewPosts.push(target.dataset.id);
+        changeViewedPostLinksColor(state.viewPosts);
       }
     }
   });
 };
 
-const renderMessage = (updatedState) => new Promise((resolve) => {
+const renderMessage = (elements, updatedState) => new Promise((resolve) => {
   setTimeout(() => {
+    const updatedElements = { ...elements };
     if (updatedState.isValid) {
-      elements.input.classList.remove('is-invalid');
-      elements.feedback.classList.remove('text-danger');
-      elements.feedback.classList.add('text-success');
-      elements.feedback.textContent = updatedState.message;
-      elements.input.value = '';
-      elements.input.focus();
+      updatedElements.input.classList.remove('is-invalid');
+      updatedElements.feedback.classList.remove('text-danger');
+      updatedElements.feedback.classList.add('text-success');
+      updatedElements.feedback.textContent = updatedState.message;
+      updatedElements.input.value = '';
+      updatedElements.input.focus();
     } else {
-      elements.input.classList.add('is-invalid');
-      elements.feedback.classList.remove('text-success');
-      elements.feedback.classList.add('text-danger');
-      elements.feedback.textContent = updatedState.message;
-      elements.input.focus();
+      updatedElements.input.classList.add('is-invalid');
+      updatedElements.feedback.classList.remove('text-success');
+      updatedElements.feedback.classList.add('text-danger');
+      updatedElements.feedback.textContent = updatedState.message;
+      updatedElements.input.focus();
     }
     resolve();
   }, 0);
@@ -101,7 +95,7 @@ const createTitle = (container, titleText, listId) => {
 
   const ulElement = document.createElement('ul');
   ulElement.setAttribute('id', listId);
-  ulElement.classList.add('list-group', 'border-0', 'rounded-0', 'lala');
+  ulElement.classList.add('list-group', 'border-0', 'rounded-0');
   divElement.appendChild(ulElement);
 };
 
@@ -124,9 +118,8 @@ const renderFeeds = (feeds) => {
   });
 };
 
-const renderPost = (diff) => {
-  const container = document.getElementById('posts-container');
-
+const renderPost = (elements, state, diff) => {
+  const ulPosts = document.getElementById('posts-container');
   diff.forEach((item) => {
     const postItemElement = document.createElement('li');
     postItemElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
@@ -138,8 +131,7 @@ const renderPost = (diff) => {
     postLinkElement.dataset.id = item.postId;
 
     postItemElement.appendChild(postLinkElement);
-    container.appendChild(postItemElement);
-    showLink(postLinkElement);
+    ulPosts.appendChild(postItemElement);
 
     const createButton = document.createElement('button');
     createButton.setAttribute('type', 'button');
@@ -151,18 +143,18 @@ const renderPost = (diff) => {
 
     postItemElement.append(createButton);
   });
-  showModalController(diff);
+  showModalController(elements, state, diff);
 };
 
-const renderFeedsAndSuccessMessage = (updatedState) => {
+const renderFeedsAndSuccessMessage = (elements, updatedState) => {
   createTitle(elements.feedsContainer, 'Фиды', 'feeds-container');
   renderFeeds(updatedState.feeds);
-  renderMessage(updatedState);
+  renderMessage(elements, updatedState);
 };
 
-const handleFeedsChange = (watchedState, value, prevValue) => {
+const handleFeedsChange = (elements, watchedState, value, prevValue) => {
   if (!prevValue.length) {
-    renderFeedsAndSuccessMessage(watchedState);
+    renderFeedsAndSuccessMessage(elements, watchedState);
   } else {
     const diff = _.differenceWith(
       value,
@@ -173,7 +165,7 @@ const handleFeedsChange = (watchedState, value, prevValue) => {
   }
 };
 
-const handlePostsChange = (value, prevValue) => {
+const handlePostsChange = (elements, state, value, prevValue) => {
   if (value.length && !prevValue.length) {
     createTitle(elements.postsContainer, 'Посты', 'posts-container');
   }
@@ -182,25 +174,63 @@ const handlePostsChange = (value, prevValue) => {
     prevValue,
     (val, prev) => val.postId === prev.postId,
   );
-  renderPost(diff);
+  renderPost(elements, state, diff);
 };
 
-const render = (state, path, value, prevValue) => {
+const render = (originalElements, state, path, value, prevValue) => {
+  const elements = { ...originalElements };
+
   switch (path) {
     case 'isValid':
-      renderMessage(state);
+      renderMessage(elements, state);
       break;
-    case 'feeds': {
-      handleFeedsChange(state, value, prevValue);
+    case 'feeds':
+      handleFeedsChange(elements, state, value, prevValue);
       break;
-    }
-    case 'posts': {
-      handlePostsChange(value, prevValue);
+    case 'posts':
+      handlePostsChange(elements, state, value, prevValue);
       break;
-    }
+    case 'viewPosts':
+      changeViewedPostLinksColor(state.viewPosts);
+      break;
+    case 'modalPost':
+      if (value) {
+        const post = findPostById(value, state.posts);
+        if (post) {
+          const { postTitle, postDescription, postLink } = post;
+          showModal(elements, postTitle, postDescription, postLink);
+        }
+      }
+      break;
+    case 'loadProcess':
+      switch (value) {
+        case 'loading':
+          elements.button.disabled = true;
+          elements.input.readOnly = true;
+          break;
+        case 'success':
+          elements.button.disabled = false;
+          elements.input.readOnly = false;
+          break;
+        case 'fail':
+          elements.button.disabled = false;
+          elements.input.readOnly = false;
+          break;
+        case 'idle':
+          elements.button.disabled = false;
+          elements.input.readOnly = false;
+          break;
+        default:
+          break;
+      }
+      break;
     default:
-      renderMessage(state);
+      renderMessage(elements, state);
   }
 };
 
-export default render;
+const createWatchedState = (elements, state) => onChange(state, (path, value, prevValue) => {
+  render(elements, state, path, value, prevValue);
+});
+
+export default createWatchedState;

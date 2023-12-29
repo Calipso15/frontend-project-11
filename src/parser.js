@@ -12,9 +12,6 @@ const fetchAndParseXML = (url) => {
       const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
 
       return xmlDoc;
-    })
-    .catch(() => {
-      console.error('Произошла ошибка при парсинге XML:');
     });
 };
 
@@ -57,13 +54,12 @@ const checkFeedsForNewPosts = (url, watchedState) => {
 
 const checkIsRssAndParse = (url, watchedState) => {
   const state = watchedState;
+  state.loadProcess = 'loading';
 
   return new Promise((resolve, reject) => {
     fetchAndParseXML(url)
       .then((xmlDoc) => {
         if (xmlDoc.querySelector('rss')) {
-          state.rssUrl.push(url);
-
           const title = xmlDoc.querySelector('channel > title').textContent.trim();
           const description = xmlDoc.querySelector('channel > description').textContent.trim();
           const feedsId = _.uniqueId();
@@ -71,13 +67,20 @@ const checkIsRssAndParse = (url, watchedState) => {
           const items = xmlDoc.querySelectorAll('item');
           state.posts.push(...extractPostData(items));
 
-          state.feeds.push({ feedsId, title, description });
+          state.feeds.push({
+            feedsId, title, description, url,
+          });
+          state.loadProcess = 'success';
+          setTimeout(() => { state.loadProcess = 'idle'; }, 500);
           resolve(true);
         } else {
+          state.loadProcess = 'idle';
           resolve(false);
         }
       })
       .catch((error) => {
+        state.loadProcess = 'fail';
+        setTimeout(() => { state.loadProcess = 'idle'; }, 500);
         reject(error);
       });
   });

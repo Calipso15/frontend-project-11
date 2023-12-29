@@ -1,34 +1,58 @@
 import i18n from 'i18next';
 import * as yup from 'yup';
-import onChange from 'on-change';
 import yupMessages from './locales/message';
 import { checkIsRssAndParse, checkFeedsForNewPosts } from './parser';
-import render from './view';
-
-const validationSchema = yup.string().url(i18n.t('string.notCorrectUrl'));
+import createWatchedState from './view';
 
 const state = {
   isValid: true,
   message: '',
   feeds: [],
   posts: [],
-  rssUrl: [],
+  viewPosts: [],
+  modalPost: null,
+  loadProcess: 'success',
 };
 
-const watchedState = onChange(state, (path, value, prevValue) => {
-  render(state, path, value, prevValue);
-});
-
-const showMessage = (message, isValid) => {
-  watchedState.message = i18n.t(message);
-  watchedState.isValid = isValid;
+const validateURL = (url, feeds) => {
+  const links = feeds.map((feed) => feed.url);
+  const currentUserSchema = yup.string().url().required().notOneOf(links);
+  return currentUserSchema
+    .validate(url)
+    .then(() => null)
+    .catch((e) => {
+      if (e.type === 'url') {
+        return i18n.t('string.notCorrectUrl');
+      } if (e.type === 'notOneOf') {
+        return i18n.t('string.rssAlreadyExists');
+      }
+      return null;
+    });
 };
-
-const checkIsNewRss = (inputValue) => !watchedState.rssUrl.includes(inputValue);
 
 const setupFormHandler = () => {
   const input = document.getElementById('url-input');
-  const form = document.querySelector('.rss-form');
+
+  const elements = {
+    form: document.querySelector('.rss-form'),
+    feedback: document.querySelector('.feedback'),
+    input: document.getElementById('url-input'),
+    postsContainer: document.querySelector('.posts'),
+    feedsContainer: document.querySelector('.feeds'),
+    button: document.querySelector('button[type="submit"]'),
+
+    modal: {
+      modalElement: document.getElementById('modal'),
+      modalTitle: document.querySelector('.modal-title'),
+      modalBody: document.querySelector('.modal-body'),
+      readMoreButton: document.querySelector('.btn-primary'),
+    },
+  };
+  const watchedState = createWatchedState(elements, state);
+  const showMessage = (message, isValid) => {
+    watchedState.message = i18n.t(message);
+    watchedState.isValid = isValid;
+  };
 
   i18n
     .init({
@@ -41,48 +65,35 @@ const setupFormHandler = () => {
       },
     })
     .then(() => {
-      form.addEventListener('submit', (e) => {
+      elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
-        input.readOnly = false;
         const inputValue = input.value.trim();
         setTimeout(() => checkFeedsForNewPosts(inputValue, watchedState), 5000);
+
         if (!inputValue) {
-          input.readOnly = false;
           showMessage('string.notValue', false);
           return;
         }
-
-        if (!validationSchema.isValidSync(inputValue)) {
-          input.readOnly = false;
-          showMessage('string.notCorrectUrl', false);
-          return;
-        }
-
-        if (!checkIsNewRss(inputValue)) {
-          input.readOnly = false;
-          showMessage('string.rssAlreadyExists', false);
-          return;
-        }
-        input.readOnly = true;
-        checkIsRssAndParse(inputValue, watchedState)
-          .then((isRss) => {
-            if (isRss) {
-              input.readOnly = false;
-              showMessage('string.rssLoaded', true);
-            } else {
-              input.readOnly = false;
-              showMessage('string.notRssUrl', false);
+        validateURL(inputValue, watchedState.feeds)
+          .then((validationError) => {
+            if (validationError) {
+              showMessage(validationError, false);
+              return;
             }
-          })
-          .catch(() => {
-            input.readOnly = false;
-            showMessage('mixed.default', false);
+            checkIsRssAndParse(inputValue, watchedState)
+              .then((isRss) => {
+                if (isRss) {
+                  showMessage('string.rssLoaded', true);
+                } else {
+                  showMessage('string.notRssUrl', false);
+                }
+              })
+              .catch(() => {
+                showMessage('mixed.default', false);
+              });
           });
       });
-    })
-    .catch(() => {
-      console.error('Ошибка инициализации i18next');
     });
 };
 
-export { setupFormHandler, showMessage };
+export default setupFormHandler;
