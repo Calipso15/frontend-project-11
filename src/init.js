@@ -16,23 +16,17 @@ const state = {
 
 const validateURL = (url, feeds) => {
   const links = feeds.map((feed) => feed.url);
-  const currentUserSchema = yup.string().url().required().notOneOf(links);
-  return currentUserSchema
-    .validate(url)
+  const currentUserSchema = yup.string()
+    .required(i18n.t('string.notValue'))
+    .url(i18n.t('string.notCorrectUrl'))
+    .notOneOf(links, i18n.t('string.rssAlreadyExists'));
+
+  return currentUserSchema.validate(url)
     .then(() => null)
-    .catch((e) => {
-      if (e.type === 'url') {
-        return i18n.t('string.notCorrectUrl');
-      } if (e.type === 'notOneOf') {
-        return i18n.t('string.rssAlreadyExists');
-      }
-      return null;
-    });
+    .catch((error) => error.message);
 };
 
 const setupFormHandler = () => {
-  const input = document.getElementById('url-input');
-
   const elements = {
     form: document.querySelector('.rss-form'),
     feedback: document.querySelector('.feedback'),
@@ -40,6 +34,7 @@ const setupFormHandler = () => {
     postsContainer: document.querySelector('.posts'),
     feedsContainer: document.querySelector('.feeds'),
     button: document.querySelector('button[type="submit"]'),
+    ulPosts: document.getElementById('posts-container'),
 
     modal: {
       modalElement: document.getElementById('modal'),
@@ -67,13 +62,7 @@ const setupFormHandler = () => {
     .then(() => {
       elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const inputValue = input.value.trim();
-        setTimeout(() => checkFeedsForNewPosts(inputValue, watchedState), 5000);
-
-        if (!inputValue) {
-          showMessage('string.notValue', false);
-          return;
-        }
+        const inputValue = elements.input.value.trim();
         validateURL(inputValue, watchedState.feeds)
           .then((validationError) => {
             if (validationError) {
@@ -83,16 +72,28 @@ const setupFormHandler = () => {
             checkIsRssAndParse(inputValue, watchedState)
               .then((isRss) => {
                 if (isRss) {
+                  elements.input.value = '';
                   showMessage('string.rssLoaded', true);
                 } else {
                   showMessage('string.notRssUrl', false);
                 }
               })
+
               .catch(() => {
                 showMessage('mixed.default', false);
               });
           });
       });
+      elements.postsContainer.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+          watchedState.modalPost = e.target.dataset.id;
+        }
+        if (!watchedState.viewPosts.includes(e.target.dataset.id)) {
+          watchedState.viewPosts.push(e.target.dataset.id);
+        }
+      });
+
+      checkFeedsForNewPosts(watchedState);
     });
 };
 

@@ -38,26 +38,6 @@ const changeViewedPostLinksColor = (postIds) => {
   });
 };
 
-const showModalController = (elements, state, diff) => {
-  const container = document.getElementById('posts-container');
-  container.addEventListener('click', (e) => {
-    const { target } = e;
-    if (target.dataset.id) {
-      if (target.tagName === 'BUTTON') {
-        const post = findPostById(target.dataset.id, diff);
-        if (post) {
-          const { postTitle, postDescription, postLink } = post;
-          showModal(elements, postTitle, postDescription, postLink);
-        }
-      }
-      if (!state.viewPosts.includes(target.dataset.id)) {
-        state.viewPosts.push(target.dataset.id);
-        changeViewedPostLinksColor(state.viewPosts);
-      }
-    }
-  });
-};
-
 const renderMessage = (elements, updatedState) => new Promise((resolve) => {
   setTimeout(() => {
     const updatedElements = { ...elements };
@@ -118,7 +98,7 @@ const renderFeeds = (feeds) => {
   });
 };
 
-const renderPost = (elements, state, diff) => {
+const renderPost = (diff) => {
   const ulPosts = document.getElementById('posts-container');
   diff.forEach((item) => {
     const postItemElement = document.createElement('li');
@@ -143,7 +123,6 @@ const renderPost = (elements, state, diff) => {
 
     postItemElement.append(createButton);
   });
-  showModalController(elements, state, diff);
 };
 
 const renderFeedsAndSuccessMessage = (elements, updatedState) => {
@@ -165,7 +144,7 @@ const handleFeedsChange = (elements, watchedState, value, prevValue) => {
   }
 };
 
-const handlePostsChange = (elements, state, value, prevValue) => {
+const handlePostsChange = (elements, value, prevValue) => {
   if (value.length && !prevValue.length) {
     createTitle(elements.postsContainer, 'Посты', 'posts-container');
   }
@@ -174,7 +153,7 @@ const handlePostsChange = (elements, state, value, prevValue) => {
     prevValue,
     (val, prev) => val.postId === prev.postId,
   );
-  renderPost(elements, state, diff);
+  renderPost(diff);
 };
 
 const render = (originalElements, state, path, value, prevValue) => {
@@ -188,7 +167,7 @@ const render = (originalElements, state, path, value, prevValue) => {
       handleFeedsChange(elements, state, value, prevValue);
       break;
     case 'posts':
-      handlePostsChange(elements, state, value, prevValue);
+      handlePostsChange(elements, value, prevValue);
       break;
     case 'viewPosts':
       changeViewedPostLinksColor(state.viewPosts);
